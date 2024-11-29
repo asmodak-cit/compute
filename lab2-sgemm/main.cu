@@ -27,7 +27,7 @@ int main (int argc, char *argv[])
     size_t A_sz, B_sz, C_sz;
     unsigned matArow, matAcol;
     unsigned matBrow, matBcol;
-    dim3 dim_grid, dim_block;
+    // dim3 dim_grid, dim_block;
 
     if (argc == 1) {
         matArow = 1000;
@@ -54,6 +54,7 @@ int main (int argc, char *argv[])
     B_sz = matBrow*matBcol;
     C_sz = matArow*matBcol;
 
+
     A_h = (float*) malloc( sizeof(float)*A_sz );
     for (unsigned int i=0; i < A_sz; i++) { A_h[i] = (rand()%100)/100.00; }
 
@@ -73,11 +74,23 @@ int main (int argc, char *argv[])
 
     //INSERT CODE HERE
 
+    cuda_ret = cudaMalloc((void**)&A_d, sizeof(float)*A_sz);
+    if (cuda_ret != cudaSuccess) {
+        printf("cudaMalloc failed for A_d: %s\n", cudaGetErrorString(cuda_ret));
+        return -1;
+    }
 
+    cuda_ret = cudaMalloc((void**)&B_d, sizeof(float)*B_sz);
+    if (cuda_ret != cudaSuccess) {
+        printf("cudaMalloc failed for B_d: %s\n", cudaGetErrorString(cuda_ret));
+        return -1;
+    }
 
-
-
-
+    cuda_ret = cudaMalloc((void**)&C_d, sizeof(float)*C_sz);
+    if (cuda_ret != cudaSuccess) {
+        printf("cudaMalloc failed for C_d: %s\n", cudaGetErrorString(cuda_ret));
+        return -1;
+    }
 
     cudaDeviceSynchronize();
     stopTime(&timer); printf("%f s\n", elapsedTime(timer));
@@ -89,9 +102,17 @@ int main (int argc, char *argv[])
 
     //INSERT CODE HERE
 
+    cuda_ret = cudaMemcpy(A_d, A_h, sizeof(float)*A_sz, cudaMemcpyHostToDevice);
+    if (cuda_ret != cudaSuccess) {
+        printf("cudaMemcpy failed: %s\n", cudaGetErrorString(cuda_ret));
+        return -1;
+    }
 
-
-
+    cuda_ret = cudaMemcpy(B_d, B_h, sizeof(float)*B_sz, cudaMemcpyHostToDevice);
+    if (cuda_ret != cudaSuccess) {
+        printf("cudaMemcpy failed: %s\n", cudaGetErrorString(cuda_ret));
+        return -1;
+    }
 
     cudaDeviceSynchronize();
     stopTime(&timer); printf("%f s\n", elapsedTime(timer));
@@ -101,6 +122,14 @@ int main (int argc, char *argv[])
     startTime(&timer);
     basicSgemm('N', 'N', matArow, matBcol, matBrow, 1.0f, \
 		A_d, matArow, B_d, matBrow, 0.0f, C_d, matBrow);
+
+    cuda_ret = cudaPeekAtLastError();
+    if (cuda_ret != cudaSuccess) {
+        printf("Kernel launch error: %s\n", cudaGetErrorString(cuda_ret));
+        return -1;
+    } else {
+        fflush(stdout);
+    }
 
     cuda_ret = cudaDeviceSynchronize();
 	if(cuda_ret != cudaSuccess) FATAL("Unable to launch kernel");
@@ -113,7 +142,11 @@ int main (int argc, char *argv[])
 
     //INSERT CODE HERE
 
-
+    cuda_ret = cudaMemcpy(C_h, C_d, sizeof(float)*C_sz, cudaMemcpyDeviceToHost);
+    if (cuda_ret != cudaSuccess) {
+        printf("cudaMemcpy failed: %s\n", cudaGetErrorString(cuda_ret));
+        return -1;
+    }
 
     cudaDeviceSynchronize();
     stopTime(&timer); printf("%f s\n", elapsedTime(timer));
@@ -133,8 +166,18 @@ int main (int argc, char *argv[])
 
     //INSERT CODE HERE
 
-
-
+    cuda_ret = cudaFree(A_d);
+    if (cuda_ret != cudaSuccess) {
+        printf("CUDA Free Error: %s\n", cudaGetErrorString(cuda_ret));
+    }
+    cuda_ret = cudaFree(B_d);
+    if (cuda_ret != cudaSuccess) {
+        printf("CUDA Free Error: %s\n", cudaGetErrorString(cuda_ret));
+    }
+    cuda_ret = cudaFree(C_d);
+    if (cuda_ret != cudaSuccess) {
+        printf("CUDA Free Error: %s\n", cudaGetErrorString(cuda_ret));
+    }
 
     return 0;
 

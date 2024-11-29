@@ -7,6 +7,7 @@
  ******************************************************************************/
 
 #include <stdio.h>
+#include <iostream>
 
 __global__ void mysgemm(int m, int n, int k, const float *A, const float *B, float* C) {
 
@@ -21,18 +22,22 @@ __global__ void mysgemm(int m, int n, int k, const float *A, const float *B, flo
 
     // INSERT KERNEL CODE HERE
 
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
 
+    if ((row < m) && (col < n)) {
 
+        float sum = 0;
+        for (int i = 0; i < k; i++) {            
+            sum += A[row*k + i] * B[i*n + col];
+        }
 
+        C[row * n + col] = sum;
 
-
-
-
-
-
-
-
+    }
+    
 }
+
 
 void basicSgemm(char transa, char transb, int m, int n, int k, float alpha, const float *A, int lda, const float *B, int ldb, float beta, float *C, int ldc)
 {
@@ -56,20 +61,21 @@ void basicSgemm(char transa, char transb, int m, int n, int k, float alpha, cons
 	return;
     }
 
+    printf("\n");
+
     // Initialize thread block and kernel grid dimensions ---------------------
 
     const unsigned int BLOCK_SIZE = 16; // Use 16x16 thread blocks
 
     //INSERT CODE HERE
 
-
+    dim3 dim_block(BLOCK_SIZE, BLOCK_SIZE);  // Each block will have BLOCK_SIZE threads in each dimension
+    dim3 dim_grid((n + BLOCK_SIZE - 1) / BLOCK_SIZE, (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
+    
     // Invoke CUDA kernel -----------------------------------------------------
 
     //INSERT CODE HERE
-
-
-
-
+    mysgemm<<<dim_grid, dim_block>>>(m, n, k, A, B, C);
 }
 
 
