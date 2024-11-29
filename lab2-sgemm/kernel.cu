@@ -7,7 +7,6 @@
  ******************************************************************************/
 
 #include <stdio.h>
-#include <iostream>
 
 __global__ void mysgemm(int m, int n, int k, const float *A, const float *B, float* C) {
 
@@ -35,9 +34,7 @@ __global__ void mysgemm(int m, int n, int k, const float *A, const float *B, flo
         C[row * n + col] = sum;
 
     }
-    
 }
-
 
 void basicSgemm(char transa, char transb, int m, int n, int k, float alpha, const float *A, int lda, const float *B, int ldb, float beta, float *C, int ldc)
 {
@@ -60,8 +57,6 @@ void basicSgemm(char transa, char transb, int m, int n, int k, float alpha, cons
 	printf("unsupported value of beta\n");
 	return;
     }
-
-    printf("\n");
 
     // Initialize thread block and kernel grid dimensions ---------------------
 
