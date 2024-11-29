@@ -54,7 +54,6 @@ int main (int argc, char *argv[])
     B_sz = matBrow*matBcol;
     C_sz = matArow*matBcol;
 
-
     A_h = (float*) malloc( sizeof(float)*A_sz );
     for (unsigned int i=0; i < A_sz; i++) { A_h[i] = (rand()%100)/100.00; }
 

@@ -1,6 +1,6 @@
 
 NVCC        = nvcc
-NVCC_FLAGS  = -O3 -I/usr/local/cuda/include
+NVCC_FLAGS  = -O3 -I/usr/local/cuda/include -arch=sm_61
 LD_FLAGS    = -lcudart -L/usr/local/cuda/lib64
 EXE	        = sgemm-tiled
 OBJ	        = main.o support.o
