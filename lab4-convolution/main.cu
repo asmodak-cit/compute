@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 	Matrix N_d, P_d;
 	unsigned imageHeight, imageWidth;
 	cudaError_t cuda_ret;
-	dim3 dim_grid, dim_block;
+	// dim3 dim_grid, dim_block;
 
 	/* Read image dimensions */
     if (argc == 1) {
@@ -78,9 +78,9 @@ int main(int argc, char* argv[])
 
 	/* Copy mask to device constant memory */
     //INSERT CODE HERE
-
-
-
+    
+	cuda_ret = cudaMemcpyToSymbol(M_c, M_h.elements, M_h.height*M_h.width*sizeof(float));
+	if(cuda_ret != cudaSuccess) FATAL("Unable to copy to const memory");
 
     cudaDeviceSynchronize();
     stopTime(&timer); printf("%f s\n", elapsedTime(timer));
@@ -91,13 +91,19 @@ int main(int argc, char* argv[])
 
     //INSERT CODE HERE
 
+    // Initialize thread block and kernel grid dimensions ---------------------
+    dim3 dim_block(BLOCK_SIZE, BLOCK_SIZE);  // Each block will have BLOCK_SIZE threads in each dimension
+    dim3 dim_grid((P_d.width + BLOCK_SIZE - 1) / BLOCK_SIZE, 
+                  (P_d.height + BLOCK_SIZE - 1) / BLOCK_SIZE);
+    
+    // Invoke CUDA kernel -----------------------------------------------------
 
-
-
-
-
-
-
+    convolution<<<dim_grid, dim_block>>>(N_d, P_d);
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        printf("CUDA Kernel Launch Error: %s\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
 
 	cuda_ret = cudaDeviceSynchronize();
 	if(cuda_ret != cudaSuccess) FATAL("Unable to launch/execute kernel");
